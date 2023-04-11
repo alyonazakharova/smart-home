@@ -46,15 +46,21 @@ function App() {
         }
       } else if (received.group === '0XBNA') {
         // electricity
-        const value: number = Number(received.value);
-        if (value < 170) {
+        // FIXME sockets_kitchen is always empty
+        const value: number | undefined = received.value ? Number(received.value) : undefined;
+        if (value && value < 170) {
           alert(`Voltage is lower than 170 V (${received.name}: ${value} V)`)
         }
-
       }
 
+      var sensorName = received.name;
+      if (sensorName === 'enable') {
+        sensorName = received.group + "/" + received.name;
+      }
+
+
       // setValues((prevValues) => ({ ...prevValues, [sensorValue[0]]: sensorValue[1] }));
-      setValues((prevValues) => ({ ...prevValues, [received.name]: received }));
+      setValues((prevValues) => ({ ...prevValues, [sensorName]: received }));
       // console.log("VALUES: ", values)
 
     };
@@ -78,7 +84,8 @@ function App() {
           <SensorItem icon="/assets/kitchen.png" name="lum_kitchen" value={values['lum_kitchen'] ? values['lum_kitchen'].value + " " + values['lum_kitchen'].unit : "-"} critical={values['lum_kitchen'] ? values['lum_kitchen'].critical : undefined}/>
           <SensorItem icon="/assets/entrance.png" name="lum_entrance" value={values['lum_entrance'] ? values['lum_entrance'].value + " " + values['lum_entrance'].unit : "-"} critical={values['lum_entrance'] ? values['lum_entrance'].critical : undefined}/>
         </div>
-        {/* <span>sensors/0XAAD/enable: {values['sensors/0XAAD/enable']}</span> */}
+        <br/>
+        <span>0XAAD/enable: {values['0XAAD/enable'] ? values['0XAAD/enable'].value : '-'}</span>
       </div>
 
       <br />
@@ -89,7 +96,8 @@ function App() {
           <SensorItem icon="/assets/window.png" name="window" value={values['window'] ? values['window'].value : "-"} critical={undefined}/>
           <SensorItem icon="/assets/backyard.png" name="backyard" value={values['backyard'] ? values['backyard'].value : "-"} critical={undefined}/>
         </div>
-        {/* <span>sensors/0XEDD/enable: {values['sensors/0XEDD/enable']}</span> */}
+        <br/>
+        <span>0XEDD/enable: {values['0XEDD/enable'] ? values['0XEDD/enable'].value : '-'}</span>
       </div>
 
       <br />
@@ -99,7 +107,8 @@ function App() {
           <SensorItem icon="/assets/boiler.png" name="temp_boiler" value={values['temp_boiler'] ? values['temp_boiler'].value + " " + values['temp_boiler'].unit : "-"} critical={values['temp_boiler'] ? values['temp_boiler'].critical : undefined }/>
           <SensorItem icon="/assets/floor.png" name="temp_floor" value={values['temp_floor'] ? values['temp_floor'].value + " " + values['temp_floor'].unit : "-"} critical={values['temp_floor'] ? values['temp_floor'].critical : undefined}/>
         </div>
-        {/* <span>sensors/0XAAD/enable: {values['sensors/0XAAD/enable']}</span> */}
+        <br/>
+        <span>0XAAD/enable: {values['0XAAD/enable'] ? values['0XAAD/enable'].value : '-'}</span>
       </div>
 
       <br />
@@ -107,9 +116,11 @@ function App() {
       <div style={{ margin: '5px', border: '1px solid #ccc', borderRadius: '10px', padding: '20px' }}>
         <div style={{ display: "flex" }}>
           <SensorItem icon="/assets/cellar.png" name="sockets_cellar" value={values['sockets_cellar'] ? values['sockets_cellar'].value + " " + values['sockets_cellar'].unit : "-"} critical={values['sockets_cellar'] ? values['sockets_cellar'].critical : undefined}/>
+          <SensorItem icon="/assets/kitchen.png" name="sockets_kitchen" value={values['sockets_kitchen'] ? values['sockets_kitchen'].value + " " + values['sockets_kitchen'].unit : "-"} critical={values['sockets_kitchen'] ? values['sockets_kitchen'].critical : undefined}/>
           <SensorItem icon="/assets/sockets_common.png" name="sockets_common" value={values['sockets_common'] ? values['sockets_common'].value + " " + values['sockets_common'].unit : "-"} critical={values['sockets_common'] ? values['sockets_common'].critical : undefined}/>
         </div>
-        {/* <span>sensors/0XBNA/enable: {values['sensors/0XBNA/enable']}</span> */}
+        <br/>
+        <span>0XBNA/enable: {values['0XBNA/enable'] ? values['0XBNA/enable'].value : '-'}</span>
       </div>
     </div>
   );
