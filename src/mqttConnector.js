@@ -37,12 +37,18 @@ mqttClient.on('message', (topic, message) => {
       const sensorNameParts = topic.split("/");
       const sensorGroup = sensorNameParts[1];
       const sensorName = sensorNameParts[2];
-      const sensorValue = message.toString().split(" ");
-      const value = sensorValue[0];
-      var unit = "";
-      if (sensorValue[1]) {
-        unit = sensorValue[1]
+
+      const regex = /^(\d+(\.\d+)?)(\s*[a-z]+)/i;
+      const sensorValue = message.toString();
+      const match = sensorValue.match(regex);
+      if (match) {
+        value = parseFloat(match[1]);
+        unit = match[3].trim(); // unit is sometimes separeted with space and sometimes not (voltage)
+      } else {
+        value = sensorValue; // if value is just on/off/open/close, it won't match regex and it doesn't have a unit, so keep it like this
+        unit = '';
       }
+
       const sensorData = new SensorData(sensorGroup, sensorName, value, unit);
 
       client.send(JSON.stringify(sensorData));
@@ -53,4 +59,3 @@ mqttClient.on('message', (topic, message) => {
 server.listen(3000, () => {
   console.log('Server listening on port 3000');
 });
-
