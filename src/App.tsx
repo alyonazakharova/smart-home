@@ -11,6 +11,18 @@ interface SensorData {
   userAlias?: string;
 }
 
+const io = require('socket.io-client');
+const socket = io('http://185.185.68.206:3000');
+
+function disableGroup(group: string) {
+  const message = {
+    group: group,
+    value: 'off'
+  };
+  socket.emit('enable', JSON.stringify(message));
+  console.log(`Disabled sensors group ${group}`);
+}
+
 function App() {
   const [values, setValues] = useState<Record<string, SensorData>>({});
 
@@ -23,7 +35,8 @@ function App() {
     ws.onmessage = (event) => {
       const received: SensorData = JSON.parse(event.data);
 
-      // TODO enable
+      console.log('RECEIVED: ', received);
+
       if (received.group === '0XAAD') {
         // illumination
         const value: number = Number(received.value);
@@ -45,14 +58,19 @@ function App() {
       } else if (received.group === '0XBNA') {
         // electricity
         // FIXME sockets_kitchen is always empty
-        // FIXME V is sometimes not separated from the value with space (to be fixed int mqttConnector)
         const value: number | undefined = received.value ? Number(received.value) : undefined;
         if (value && value < 170) {
           // alert(`Voltage is lower than 170 V (${received.name}: ${value} V)`)
           console.log(`Voltage is lower than 170 V (${received.name}: ${value} V)`)
+          received.critical = true;
         }
       }
 
+      if (received.critical) {
+        disableGroup(received.group);
+      }
+
+      // FIXME!!!!!!!!!!!!!!!!!
       var sensorName = received.name;
       if (sensorName === 'enable') {
         sensorName = received.group + "/" + received.name;
@@ -80,8 +98,8 @@ function App() {
     <div>
       {['0XAAD', '0XBNA', 'OXDFA', '0XEDD'].map(group => (
         <div key={group}>
-          <h3 style={{margin: '10px'}}>{group}</h3>
-          <div style={{ display: "flex", margin: '5px', border: '1px solid #ccc', borderRadius: '10px', padding: '20px'}}>
+          <h3 style={{ margin: '10px' }}>{group}</h3>
+          <div style={{ display: "flex", margin: '5px', border: '1px solid #ccc', borderRadius: '10px', padding: '20px' }}>
             {Object.keys(values).map(key => {
               if (values[key].group === group)
                 return (
@@ -97,65 +115,6 @@ function App() {
       ))}
     </div>
   );
-  
-  // return (
-  //   <div>
-  //     {/* <h3 style={{margin: '10px'}}>Light:</h3>
-  //     <div style={{ margin: '5px', border: '1px solid #ccc', borderRadius: '10px', padding: '20px' }}>
-  //       <div style={{ display: "flex" }}>
-  //         <SensorItem icon="/assets/bathroom.png"
-  //           name={values['lum_bathroom'] && values['lum_bathroom'].userAlias ? values['lum_bathroom'].userAlias : "lum_bathroom"}
-  //           value={values['lum_bathroom'] ? values['lum_bathroom'].value + " " + values['lum_bathroom'].unit : "-"}
-  //           critical={values['um_bathroom'] ? values['lum_bathroom'].critical : undefined}
-  //         />
-  //         <SensorItem icon="/assets/bedroom.png"
-  //         name={values['lum_bedroom'] && values['lum_bedroom'].userAlias ? values['lum_bedroom'].userAlias : "lum_bedroom"}
-  //         value={values['lum_bedroom'] ? values['lum_bedroom'].value + " " + values['lum_bedroom'].unit : "-"}
-  //         critical={values['lum_bedroom'] ? values['lum_bedroom'].critical : undefined}
-  //         />
-  //         <SensorItem icon="/assets/kitchen.png" name="lum_kitchen" value={values['lum_kitchen'] ? values['lum_kitchen'].value + " " + values['lum_kitchen'].unit : "-"} critical={values['lum_kitchen'] ? values['lum_kitchen'].critical : undefined} />
-  //         <SensorItem icon="/assets/entrance.png" name="lum_entrance" value={values['lum_entrance'] ? values['lum_entrance'].value + " " + values['lum_entrance'].unit : "-"} critical={values['lum_entrance'] ? values['lum_entrance'].critical : undefined} />
-  //       </div>
-  //       <br />
-  //       <span>0XAAD/enable: {values['0XAAD/enable'] ? values['0XAAD/enable'].value : '-'}</span>
-  //     </div>
-
-  //     <br />
-  //     <h3 style={{margin: '10px'}}>???))):</h3>
-  //     <div style={{ margin: '5px', border: '1px solid #ccc', borderRadius: '10px', padding: '20px' }}>
-  //       <div style={{ display: "flex" }}>
-  //         <SensorItem icon="/assets/entrance.png" name="entrance" value={values['entrance'] ? values['entrance'].value : "-"} critical={undefined} />
-  //         <SensorItem icon="/assets/window.png" name="window" value={values['window'] ? values['window'].value : "-"} critical={undefined} />
-  //         <SensorItem icon="/assets/backyard.png" name="backyard" value={values['backyard'] ? values['backyard'].value : "-"} critical={undefined} />
-  //       </div>
-  //       <br />
-  //       <span>0XEDD/enable: {values['0XEDD/enable'] ? values['0XEDD/enable'].value : '-'}</span>
-  //     </div>
-
-  //     <br />
-  //     <h3 style={{margin: '10px'}}>Temperature:</h3>
-  //     <div style={{ margin: '5px', border: '1px solid #ccc', borderRadius: '10px', padding: '20px' }}>
-  //       <div style={{ display: "flex" }}>
-  //         <SensorItem icon="/assets/boiler.png" name="temp_boiler" value={values['temp_boiler'] ? values['temp_boiler'].value + " " + values['temp_boiler'].unit : "-"} critical={values['temp_boiler'] ? values['temp_boiler'].critical : undefined} />
-  //         <SensorItem icon="/assets/floor.png" name="temp_floor" value={values['temp_floor'] ? values['temp_floor'].value + " " + values['temp_floor'].unit : "-"} critical={values['temp_floor'] ? values['temp_floor'].critical : undefined} />
-  //       </div>
-  //       <br />
-  //       <span>0XAAD/enable: {values['0XAAD/enable'] ? values['0XAAD/enable'].value : '-'}</span>
-  //     </div>
-
-  //     <br />
-  //     <h3 style={{margin: '10px'}}>Sockets:</h3>
-  //     <div style={{ margin: '5px', border: '1px solid #ccc', borderRadius: '10px', padding: '20px' }}>
-  //       <div style={{ display: "flex" }}>
-  //         <SensorItem icon="/assets/cellar.png" name="sockets_cellar" value={values['sockets_cellar'] ? values['sockets_cellar'].value + " " + values['sockets_cellar'].unit : "-"} critical={values['sockets_cellar'] ? values['sockets_cellar'].critical : undefined} />
-  //         <SensorItem icon="/assets/kitchen.png" name="sockets_kitchen" value={values['sockets_kitchen'] ? values['sockets_kitchen'].value + " " + values['sockets_kitchen'].unit : "-"} critical={values['sockets_kitchen'] ? values['sockets_kitchen'].critical : undefined} />
-  //         <SensorItem icon="/assets/sockets_common.png" name="sockets_common" value={values['sockets_common'] ? values['sockets_common'].value + " " + values['sockets_common'].unit : "-"} critical={values['sockets_common'] ? values['sockets_common'].critical : undefined} />
-  //       </div>
-  //       <br />
-  //       <span>0XBNA/enable: {values['0XBNA/enable'] ? values['0XBNA/enable'].value : '-'}</span>
-  //     </div> */}
-  //   </div>
-  // );
 }
 
 export default App;
