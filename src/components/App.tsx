@@ -107,7 +107,7 @@ function App() {
       {['0XAAD', '0XBNA', 'OXDFA', '0XEDD'].map(group => (
         <div key={group}>
           <h3 style={{ margin: '10px' }}>{group}</h3>
-          <div style={{ display: "flex", margin: '5px', border: '1px solid #ccc', borderRadius: '10px', padding: '20px' }}>
+          <div style={{ display: "flex", margin: '5px', border: '1px solid #ccc', borderRadius: '10px', padding: '10px' }}>
             {Object.keys(values).map(key => {
               if (values[key].group === group)
                 return (
