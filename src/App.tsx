@@ -38,7 +38,6 @@ function App() {
       console.log('RECEIVED: ', received);
 
       if (received.group === '0XAAD') {
-        // illumination
         const value: number = Number(received.value);
         if (value > 800) {
           // alert(`Illumination is higher than 800 Lux (${received.name}: ${value} Lux)`)
@@ -46,9 +45,7 @@ function App() {
           received.critical = true;
         }
       } else if (received.group === 'OXDFA') {
-        // temperature
-        // 50 С = 122 F
-        const criticalValue: number = received.unit === 'C' ? 50 : 122;
+        const criticalValue: number = received.unit === 'C' ? 50 : 122; // 50C = 122F
         const value: number = Number(received.value);
         if (value > criticalValue) {
           // alert(`Temperature is higher that 50C (${received.name}: ${value} ${received.unit})`)
@@ -56,12 +53,17 @@ function App() {
           received.critical = true;
         }
       } else if (received.group === '0XBNA') {
-        // electricity
         // FIXME sockets_kitchen is always empty
         const value: number | undefined = received.value ? Number(received.value) : undefined;
         if (value && value < 170) {
           // alert(`Voltage is lower than 170 V (${received.name}: ${value} V)`)
           console.log(`Voltage is lower than 170 V (${received.name}: ${value} V)`)
+          received.critical = true;
+        }
+      } else if (received.group === '0XEDD') {
+        if (received.value === 'open') {
+          // alert(`${received.name} is open`)
+          console.log(`${received.name} is open`)
           received.critical = true;
         }
       }
@@ -70,7 +72,6 @@ function App() {
         disableGroup(received.group);
       }
 
-      // FIXME!!!!!!!!!!!!!!!!!
       var sensorName = received.name;
       if (sensorName === 'enable') {
         sensorName = received.group + "/" + received.name;
