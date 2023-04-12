@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import SensorItem from './SensorItem'
-import { group } from 'console';
 
 interface SensorData {
   group: string,
@@ -26,8 +25,14 @@ function disableGroup(group: string) {
 function App() {
   const [values, setValues] = useState<Record<string, SensorData>>({});
 
+  function handleUserAliasSave(sensorName: string, alias: string) {
+    const sensorData = values[sensorName];
+    sensorData.userAlias = alias;
+    setValues((prevValues) => ({ ...prevValues, [sensorName]: sensorData }));
+  }
+
   useEffect(() => {
-    const ws = new WebSocket('ws://localhost:3000');
+    const ws = new WebSocket('ws://localhost:3001');
     ws.onopen = () => {
       console.log('WebSocket connection opened');
     };
@@ -35,7 +40,9 @@ function App() {
     ws.onmessage = (event) => {
       const received: SensorData = JSON.parse(event.data);
 
-      console.log('RECEIVED: ', received);
+      if (received.group === '0XAAD') {
+        console.log('RECEIVED: ', received);
+      }
 
       if (received.group === '0XAAD') {
         const value: number = Number(received.value);
@@ -78,10 +85,10 @@ function App() {
       }
 
       // in order to keep user alias for the sensor after value update
-      // const exsitingData: SensorData | undefined = values[sensorName];
-      // if (exsitingData) {
-      //   received.userAlias = exsitingData.userAlias;
-      // }
+      const exsitingData: SensorData | undefined = values[sensorName];
+      if (exsitingData) {
+        received.userAlias = exsitingData.userAlias;
+      }
 
       setValues((prevValues) => ({ ...prevValues, [sensorName]: received }));
     };
@@ -93,7 +100,7 @@ function App() {
     return () => {
       ws.close();
     };
-  }, []);
+  }, [values]);
 
   return (
     <div>
@@ -105,9 +112,10 @@ function App() {
               if (values[key].group === group)
                 return (
                   <SensorItem icon={`/assets/${values[key].name}.png`}
-                    name={values[key].name}
+                    name={values[key].userAlias ? values[key].userAlias! : values[key].name}
                     value={values[key].value + " " + values[key].unit}
                     critical={values[key].critical}
+                    changeUserAlias={handleUserAliasSave}
                   />
                 )
             })}
