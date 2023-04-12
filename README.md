@@ -1,7 +1,7 @@
-This project is a UI for smart home sensors data.
+This project is a UI for smart home sensors.
 
 
-Sensors are grouped by type. If a sensor value is higher or lower than some critical value, the panel is colored with red.
+Sensors are grouped by type. If a sensor value reaches some critical value, the panel is colored with red and a message to disable to whole group of sensors is sent.
 
 Also dynamic adding of panels is implemented. (Actually, it is _almost_ dynamic. Currently it's attached to hardcoded group names, so if a new group will be added, it won't be displayed in the application. However, it's fixable.)
 
@@ -19,6 +19,6 @@ npm start
 ```
 
 
-Bellow you can find an illistration of the working app:
+Bellow you can find an illustration of the working app:
 
 <img width="1440" alt="Screenshot 2023-04-11 at 18 55 50" src="https://user-images.githubusercontent.com/25694552/231221759-9c2195b8-acfd-4fd9-a7dc-98c2d6659271.png">
