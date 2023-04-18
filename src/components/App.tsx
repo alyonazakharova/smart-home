@@ -45,10 +45,6 @@ function App() {
         const received: SensorData = JSON.parse(event.data);
 
         if (received.group === '0XAAD') {
-          console.log('RECEIVED: ', received);
-        }
-
-        if (received.group === '0XAAD') {
           const value: number = Number(received.value);
           if (value > 800) {
             // alert(`Illumination is higher than 800 Lux (${received.name}: ${value} Lux)`)
