@@ -41,11 +41,6 @@ function App() {
         console.log('WebSocket connection opened');
       };
 
-      // const ws = new WebSocket('ws://localhost:3001');
-      // ws.onopen = () => {
-      //   console.log('WebSocket connection opened');
-      // };
-
       ws.current.onmessage = (event) => {
         const received: SensorData = JSON.parse(event.data);
 
@@ -101,10 +96,6 @@ function App() {
 
         setValues((prevValues) => ({ ...prevValues, [sensorName]: received }));
       };
-
-      // ws.current.onclose = () => {
-      //   console.log('WebSocket connection closed');
-      // };
     }
   }, [values]);
 
