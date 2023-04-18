@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import SensorItem from './SensorItem'
 
 interface SensorData {
@@ -25,6 +25,8 @@ function disableGroup(group: string) {
 function App() {
   const [values, setValues] = useState<Record<string, SensorData>>({});
 
+  const ws = useRef<WebSocket | null>(null);
+
   function handleUserAliasSave(sensorName: string, alias: string) {
     const sensorData = values[sensorName];
     sensorData.userAlias = alias;
@@ -32,74 +34,78 @@ function App() {
   }
 
   useEffect(() => {
-    const ws = new WebSocket('ws://localhost:3001');
-    ws.onopen = () => {
-      console.log('WebSocket connection opened');
-    };
+    if (!ws.current) {
+      ws.current = new WebSocket('ws://localhost:3001');
 
-    ws.onmessage = (event) => {
-      const received: SensorData = JSON.parse(event.data);
+      ws.current.onopen = () => {
+        console.log('WebSocket connection opened');
+      };
 
-      if (received.group === '0XAAD') {
-        console.log('RECEIVED: ', received);
-      }
+      // const ws = new WebSocket('ws://localhost:3001');
+      // ws.onopen = () => {
+      //   console.log('WebSocket connection opened');
+      // };
 
-      if (received.group === '0XAAD') {
-        const value: number = Number(received.value);
-        if (value > 800) {
-          // alert(`Illumination is higher than 800 Lux (${received.name}: ${value} Lux)`)
-          console.log(`Illumination is higher than 800 Lux (${received.name}: ${value} Lux)`)
-          received.critical = true;
+      ws.current.onmessage = (event) => {
+        const received: SensorData = JSON.parse(event.data);
+
+        if (received.group === '0XAAD') {
+          console.log('RECEIVED: ', received);
         }
-      } else if (received.group === 'OXDFA') {
-        const criticalValue: number = received.unit === 'C' ? 50 : 122; // 50C = 122F
-        const value: number = Number(received.value);
-        if (value > criticalValue) {
-          // alert(`Temperature is higher that 50C (${received.name}: ${value} ${received.unit})`)
-          console.log(`Temperature is higher that 50C (${received.name}: ${value} ${received.unit})`)
-          received.critical = true;
+
+        if (received.group === '0XAAD') {
+          const value: number = Number(received.value);
+          if (value > 800) {
+            // alert(`Illumination is higher than 800 Lux (${received.name}: ${value} Lux)`)
+            console.log(`Illumination is higher than 800 Lux (${received.name}: ${value} Lux)`)
+            received.critical = true;
+          }
+        } else if (received.group === 'OXDFA') {
+          const criticalValue: number = received.unit === 'C' ? 50 : 122; // 50C = 122F
+          const value: number = Number(received.value);
+          if (value > criticalValue) {
+            // alert(`Temperature is higher that 50C (${received.name}: ${value} ${received.unit})`)
+            console.log(`Temperature is higher that 50C (${received.name}: ${value} ${received.unit})`)
+            received.critical = true;
+          }
+        } else if (received.group === '0XBNA') {
+          // FIXME sockets_kitchen is always empty
+          const value: number | undefined = received.value ? Number(received.value) : undefined;
+          if (value && value < 170) {
+            // alert(`Voltage is lower than 170 V (${received.name}: ${value} V)`)
+            console.log(`Voltage is lower than 170 V (${received.name}: ${value} V)`)
+            received.critical = true;
+          }
+        } else if (received.group === '0XEDD') {
+          if (received.value === 'open') {
+            // alert(`${received.name} is open`)
+            console.log(`${received.name} is open`)
+            received.critical = true;
+          }
         }
-      } else if (received.group === '0XBNA') {
-        // FIXME sockets_kitchen is always empty
-        const value: number | undefined = received.value ? Number(received.value) : undefined;
-        if (value && value < 170) {
-          // alert(`Voltage is lower than 170 V (${received.name}: ${value} V)`)
-          console.log(`Voltage is lower than 170 V (${received.name}: ${value} V)`)
-          received.critical = true;
+
+        if (received.critical) {
+          disableGroup(received.group);
         }
-      } else if (received.group === '0XEDD') {
-        if (received.value === 'open') {
-          // alert(`${received.name} is open`)
-          console.log(`${received.name} is open`)
-          received.critical = true;
+
+        var sensorName = received.name;
+        if (sensorName === 'enable') {
+          sensorName = received.group + "/" + received.name;
         }
-      }
 
-      if (received.critical) {
-        disableGroup(received.group);
-      }
+        // in order to keep user alias for the sensor after value update
+        const exsitingData: SensorData | undefined = values[sensorName];
+        if (exsitingData) {
+          received.userAlias = exsitingData.userAlias;
+        }
 
-      var sensorName = received.name;
-      if (sensorName === 'enable') {
-        sensorName = received.group + "/" + received.name;
-      }
+        setValues((prevValues) => ({ ...prevValues, [sensorName]: received }));
+      };
 
-      // in order to keep user alias for the sensor after value update
-      const exsitingData: SensorData | undefined = values[sensorName];
-      if (exsitingData) {
-        received.userAlias = exsitingData.userAlias;
-      }
-
-      setValues((prevValues) => ({ ...prevValues, [sensorName]: received }));
-    };
-
-    ws.onclose = () => {
-      console.log('WebSocket connection closed');
-    };
-
-    return () => {
-      ws.close();
-    };
+      // ws.current.onclose = () => {
+      //   console.log('WebSocket connection closed');
+      // };
+    }
   }, [values]);
 
   return (
